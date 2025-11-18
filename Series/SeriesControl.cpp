@@ -677,7 +677,7 @@ void SeriesControl::analyzeGrowthCurves() const {
     std::cout << "=== GROWTH CURVE ANALYSIS ===" << std::endl;
     std::cout << "Series: " << series.getName() << std::endl;
     
-    // Подгонка всех кривых
+    
     auto [a_linear, b_linear] = series.fitLinearPolynomial();
     auto [a_exp, b_exp] = series.fitExponential();
     auto [a_gomp, b_gomp] = series.fitGompertz();
@@ -701,7 +701,7 @@ void SeriesControl::analyzeGrowthCurves() const {
                   << " * t + " << poly3_coeffs[2] << " * t2 + " << poly3_coeffs[3] << " * t3" << std::endl;
     }
     
-    // Проверка валидности
+    
     bool linear_valid = (std::abs(b_linear) > 1e-8 && std::abs(b_linear) < 1000.0);
     bool exp_valid = (std::abs(b_exp) > 1e-10 && std::abs(b_exp) < 1.0 && a_exp > 1.0);
     bool gomp_valid = (a_gomp > 1e-8 && a_gomp < 10.0 && std::abs(b_gomp) < series.size() * 100.0);
@@ -714,7 +714,7 @@ void SeriesControl::analyzeGrowthCurves() const {
                        std::abs(poly3_coeffs[2]) < 1000.0 &&
                        std::abs(poly3_coeffs[3]) < 1000.0);
     
-    // Расчет метрик качества
+    
     auto data = series.getData();
     double data_mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
     
@@ -740,7 +740,7 @@ void SeriesControl::analyzeGrowthCurves() const {
         return {mse, r_squared};
     };
     
-    // Прогнозирование и расчет метрик
+    
     auto linear_pred = linear_valid ? series.predictLinear(a_linear, b_linear) : std::vector<double>();
     auto exp_pred = exp_valid ? series.predictExponential(a_exp, b_exp) : std::vector<double>();
     auto gomp_pred = gomp_valid ? series.predictGompertz(a_gomp, b_gomp) : std::vector<double>();
@@ -755,7 +755,7 @@ void SeriesControl::analyzeGrowthCurves() const {
     auto [mse_poly2, r2_poly2] = calculate_metrics(poly2_pred);
     auto [mse_poly3, r2_poly3] = calculate_metrics(poly3_pred);
     
-    // Вывод метрик качества
+    
     std::cout << "\n=== MODEL QUALITY ===" << std::endl;
     std::cout << std::fixed << std::setprecision(6);
     
@@ -778,7 +778,7 @@ void SeriesControl::analyzeGrowthCurves() const {
         std::cout << "POLY3 - MSE: " << mse_poly3 << ", R-sqr: " << r2_poly3 << std::endl;
     }
     
-    // Ранжирование моделей
+    
     std::cout << "\n=== MODEL RANKING ===" << std::endl;
     std::vector<std::pair<double, std::string>> models_r2;
     if (linear_valid) models_r2.push_back({r2_linear, "LINEAR"});
@@ -794,7 +794,7 @@ void SeriesControl::analyzeGrowthCurves() const {
         std::cout << i + 1 << ". " << models_r2[i].second << " (R-sqr: " << models_r2[i].first << ")" << std::endl;
     }
     
-    // Финальная рекомендация
+    
     std::cout << "\n=== FINAL RECOMMENDATION ===" << std::endl;
     if (!models_r2.empty()) {
         std::string best_model = models_r2[0].second;
@@ -821,7 +821,7 @@ void SeriesControl::analyzeGrowthCurves() const {
         }
     }
     
-    // Построение графиков
+    
     plotGrowthCurvesComparison(linear_pred, exp_pred, gomp_pred, log_pred, poly2_pred, poly3_pred,
                               linear_valid, exp_valid, gomp_valid, logistic_valid, poly2_valid, poly3_valid);
 }
@@ -842,7 +842,7 @@ void SeriesControl::plotGrowthCurvesComparison(const std::vector<double>& linear
     
     std::filesystem::create_directories("plots/growth_curves");
     
-    // Сохранение данных
+    
     std::string originalFile = "plots/growth_curves/original.dat";
     saveGrowthCurveData(series, originalFile, "Original");
     
@@ -884,7 +884,7 @@ void SeriesControl::plotGrowthCurvesComparison(const std::vector<double>& linear
         dataFiles.push_back(poly3File);
     }
     
-    // Создание скрипта GNUplot
+    
     std::string scriptFile = "plots/growth_curves/growth_comparison.gnu";
     std::ofstream script(scriptFile);
     
@@ -898,14 +898,14 @@ void SeriesControl::plotGrowthCurvesComparison(const std::vector<double>& linear
     script << "set key spacing 2" << std::endl;
     script << std::endl;
     
-    // Определяем стили линий - все тонкие сплошные
-    script << "set style line 1 lw 1.0 lc rgb '#000000' dt 1" << std::endl;  // Original - black
-    script << "set style line 2 lw 1.0 lc rgb '#FF0000' dt 1" << std::endl;  // Linear - red
-    script << "set style line 3 lw 1.0 lc rgb '#00AA00' dt 1" << std::endl;  // Exponential - green
-    script << "set style line 4 lw 1.0 lc rgb '#0000FF' dt 1" << std::endl;  // Gompertz - blue
-    script << "set style line 5 lw 1.0 lc rgb '#FF00FF' dt 1" << std::endl;  // Logistic - magenta
-    script << "set style line 6 lw 1.0 lc rgb '#FF8C00' dt 1" << std::endl;  // Poly2 - orange
-    script << "set style line 7 lw 1.0 lc rgb '#8A2BE2' dt 1" << std::endl;  // Poly3 - violet
+    
+    script << "set style line 1 lw 1.0 lc rgb '#000000' dt 1" << std::endl;  
+    script << "set style line 2 lw 1.0 lc rgb '#FF0000' dt 1" << std::endl;  
+    script << "set style line 3 lw 1.0 lc rgb '#00AA00' dt 1" << std::endl;  
+    script << "set style line 4 lw 1.0 lc rgb '#0000FF' dt 1" << std::endl;  
+    script << "set style line 5 lw 1.0 lc rgb '#FF00FF' dt 1" << std::endl;  
+    script << "set style line 6 lw 1.0 lc rgb '#FF8C00' dt 1" << std::endl;  
+    script << "set style line 7 lw 1.0 lc rgb '#8A2BE2' dt 1" << std::endl;  
     script << std::endl;
     
     script << "plot '" << originalFile << "' using 1:3 with lines ls 1 title 'Original Data'";
@@ -951,7 +951,7 @@ void SeriesControl::plotGrowthCurvesComparison(const std::vector<double>& linear
     
     script.close();
     
-    // Запуск GNUplot
+    
     std::string command = "gnuplot \"" + scriptFile + "\"";
     int result = std::system(command.c_str());
     
@@ -962,7 +962,7 @@ void SeriesControl::plotGrowthCurvesComparison(const std::vector<double>& linear
         std::cerr << "Error: GNU Plot execution failed" << std::endl;
     }
     
-    // Очистка временных файлов
+    
     cleanupDataFiles(dataFiles);
     if (std::filesystem::exists(scriptFile)) {
         std::filesystem::remove(scriptFile);
@@ -998,16 +998,16 @@ void SeriesControl::saveGrowthCurveData(const SeriesClass& series,
 void SeriesControl::analyzeResiduals() const {
     std::cout << "=== RESIDUAL COMPONENT ANALYSIS ===" << std::endl;
     
-    // Получаем остаточную компоненту из декомпозиции
-    auto decomposition = series.decomposeTimeSeries(12); // период можно настроить
+    
+    auto decomposition = series.decomposeTimeSeries(12); 
     SeriesClass residualsSeries(decomposition.finalResidual, 
                                series.getTimestamps(), 
                                series.getName() + " - Residuals");
     
-    // Анализируем остатки
+    
     auto analysis = residualsSeries.analyzeResiduals();
     
-    // Выводим детальные результаты
+    
     std::cout << "Residual series: " << residualsSeries.getName() << std::endl;
     std::cout << "Number of points: " << residualsSeries.size() << std::endl;
     
@@ -1036,11 +1036,11 @@ void SeriesControl::analyzeResiduals() const {
     
     std::cout << "\n" << analysis.conclusion << std::endl;
     
-    // Дополнительно: строим график остатков
+    
     plotResiduals(residualsSeries);
 }
 
-// Метод для построения графика остатков
+
 void SeriesControl::plotResiduals(const SeriesClass& residuals) const {
     std::filesystem::create_directories("plots/residuals");
     
@@ -1061,7 +1061,7 @@ void SeriesControl::plotResiduals(const SeriesClass& residuals) const {
     script << "set output 'plots/residuals/residuals_analysis.png'" << std::endl;
     script << "set multiplot layout 2,2 title 'Residual Analysis: " << series.getName() << "'" << std::endl;
     
-    // График остатков во времени
+    
     script << "set title 'Residuals vs Time'" << std::endl;
     script << "set xlabel 'Time Index'" << std::endl;
     script << "set ylabel 'Residual Value'" << std::endl;
@@ -1069,7 +1069,7 @@ void SeriesControl::plotResiduals(const SeriesClass& residuals) const {
     script << "plot '" << dataFile << "' using 1:2 with lines lw 1 lc rgb 'blue' title 'Residuals', \\" << std::endl;
     script << "     0 with lines lw 2 lc rgb 'red' title 'Zero line'" << std::endl;
     
-    // Гистограмма распределения
+    
     script << "set title 'Residuals Distribution'" << std::endl;
     script << "set xlabel 'Residual Value'" << std::endl;
     script << "set ylabel 'Frequency'" << std::endl;
@@ -1078,7 +1078,7 @@ void SeriesControl::plotResiduals(const SeriesClass& residuals) const {
     script << "bin(x,width) = width*floor(x/width)" << std::endl;
     script << "plot '" << dataFile << "' using (bin($2,binwidth)):(1.0) smooth freq with boxes lc rgb 'green' title 'Distribution'" << std::endl;
     
-    // Q-Q plot (для проверки нормальности)
+    
     script << "set title 'Q-Q Plot (Normality Check)'" << std::endl;
     script << "set xlabel 'Theoretical Quantiles'" << std::endl;
     script << "set ylabel 'Sample Quantiles'" << std::endl;
@@ -1087,7 +1087,7 @@ void SeriesControl::plotResiduals(const SeriesClass& residuals) const {
     script << "plot '" << dataFile << "' using (invnorm(($0+1)/(STATS_records+1))):2 with points pt 7 lc rgb 'purple' title 'Q-Q points', \\" << std::endl;
     script << "     x with lines lw 2 lc rgb 'red' title 'Normal line'" << std::endl;
     
-    // Автокорреляционная функция
+    
     script << "set title 'Autocorrelation Function'" << std::endl;
     script << "set xlabel 'Lag'" << std::endl;
     script << "set ylabel 'Autocorrelation'" << std::endl;
@@ -1105,13 +1105,13 @@ void SeriesControl::plotResiduals(const SeriesClass& residuals) const {
         std::cout << "Residual analysis plot saved: plots/residuals/residuals_analysis.png" << std::endl;
     }
     
-    // Очистка временных файлов
+    
     cleanupDataFiles({dataFile, scriptFile});
 }
 
-// SeriesControl.cpp (добавления в конец файла, после существующих реализаций)
 
-// SeriesControl.cpp (обновление функции forecastAnalysis)
+
+
 
 void SeriesControl::forecastAnalysis(size_t shortStep, size_t longStep) const {
     std::cout << "=== FORECAST ANALYSIS ===" << std::endl;
@@ -1120,7 +1120,7 @@ void SeriesControl::forecastAnalysis(size_t shortStep, size_t longStep) const {
     
     size_t max_steps = std::max(shortStep, longStep);
     
-    // Linear forecast
+    
     std::cout << "\nLINEAR TREND FORECAST:" << std::endl;
     auto linear_forecasts = series.forecastLinear(max_steps);
     for (size_t step : {shortStep, longStep}) {
@@ -1133,7 +1133,7 @@ void SeriesControl::forecastAnalysis(size_t shortStep, size_t longStep) const {
         }
     }
     
-    // Poly2 forecast
+    
     std::cout << "\nPOLYNOMIAL2 TREND FORECAST:" << std::endl;
     auto poly2_forecasts = series.forecastPolynomial2(max_steps);
     for (size_t step : {shortStep, longStep}) {
@@ -1146,7 +1146,7 @@ void SeriesControl::forecastAnalysis(size_t shortStep, size_t longStep) const {
         }
     }
     
-    // Poly3 forecast
+    
     std::cout << "\nPOLYNOMIAL3 TREND FORECAST:" << std::endl;
     auto poly3_forecasts = series.forecastPolynomial3(max_steps);
     for (size_t step : {shortStep, longStep}) {

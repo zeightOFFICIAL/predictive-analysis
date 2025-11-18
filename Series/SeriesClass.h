@@ -23,7 +23,7 @@ public:
         std::vector<double> finalResidual;
     };
     struct ResidualAnalysisResult {
-        // Для случайности
+        
         size_t turningPointsCount;
         double turningPointsStatistic;
         bool isRandomByTurningPoints;
@@ -32,7 +32,7 @@ public:
         double seriesStatistic;
         bool isRandomBySeries;
         
-        // Для нормальности
+        
         double skewness;
         double kurtosis;
         bool isNormalByMoments;
@@ -40,16 +40,16 @@ public:
         double rSStatistic;
         bool isNormalByRS;
         
-        // Для математического ожидания
+        
         double mean;
         double tStatistic;
         bool hasZeroMean;
         
-        // Для независимости
+        
         double durbinWatsonStatistic;
         bool isIndependent;
         
-        // Общий вывод
+        
         bool isAdequate;
         std::string conclusion;
     };
@@ -131,15 +131,28 @@ public:
     ResidualAnalysisResult analyzeResiduals() const;
 
     struct Forecast {
-    double point;
-    double lower;
-    double upper;
+        double point;
+        double lower;
+        double upper;
+    };
+
+    std::vector<Forecast> forecastLinear(size_t steps, double alpha = 0.05) const;
+    std::vector<Forecast> forecastPolynomial2(size_t steps, double alpha = 0.05) const;
+    std::vector<Forecast> forecastPolynomial3(size_t steps, double alpha = 0.05) const;
+    double getTCritical(double alpha, size_t df) const;
+
+    struct ForecastBacktestResult {
+        std::vector<double> fixed_points;
+        std::vector<double> adaptive_points;
+        Forecast last_fixed_interval;
+        Forecast last_adaptive_interval;
+        double mse_fixed;
+        double mse_adapt;
+    };
+    ForecastBacktestResult backtestLinear(double train_fraction = 0.8) const;
+    ForecastBacktestResult backtestPolynomial3(double train_fraction = 0.8) const;
+
 };
 
-std::vector<Forecast> forecastLinear(size_t steps, double alpha = 0.05) const;
-std::vector<Forecast> forecastPolynomial2(size_t steps, double alpha = 0.05) const;
-std::vector<Forecast> forecastPolynomial3(size_t steps, double alpha = 0.05) const;
-double getTCritical(double alpha, size_t df) const;
-};
 
-#endif 
+#endif

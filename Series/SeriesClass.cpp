@@ -772,7 +772,6 @@ void SeriesClass::analyzeGrowthCurveCharacteristics() const {
     auto gompertzInd = calculateGompertzIndicator();
     auto logisticInd = calculateLogisticIndicator();
     
-    // Подсчет валидных значений для Гомперца и Логистической
     int valid_gompertz = 0, valid_logistic = 0;
     double sum_gompertz = 0.0, sum_logistic = 0.0;
     
@@ -823,7 +822,6 @@ void SeriesClass::analyzeGrowthCurveCharacteristics() const {
     std::cout << "Mean Gompertz Indicator: " << meanGompertz << std::endl;
     std::cout << "Mean Logistic Indicator: " << meanLogistic << std::endl;
     
-    // Упрощенная логика выбора кривой
     std::cout << "\n=== GROWTH CURVE SELECTION ===" << std::endl;
     
     bool constant_first_diff = (std::abs(meanSecondDiff) < 0.1 * std::abs(meanFirstDiff));
@@ -868,13 +866,11 @@ std::vector<double> SeriesClass::fitPolynomial2() const {
         sum_t2y += t2 * data[t];
     }
     
-    // Решаем систему методом Крамера (без масштабирования)
     double det = n * (sum_t2 * sum_t4 - sum_t3 * sum_t3) 
                - sum_t * (sum_t * sum_t4 - sum_t2 * sum_t3)
                + sum_t2 * (sum_t * sum_t3 - sum_t2 * sum_t2);
     
     if (std::abs(det) < 1e-12) {
-        // Fallback to linear
         double b_linear = (n * sum_ty - sum_t * sum_y) / (n * sum_t2 - sum_t * sum_t);
         double a_linear = (sum_y - b_linear * sum_t) / n;
         return {a_linear, b_linear, 0.0};
@@ -899,7 +895,7 @@ std::vector<double> SeriesClass::fitPolynomial2() const {
     return {a, b, c};
 }
 
-// Метод наименьших квадратов для полинома 3-го порядка y = a + b*t + c*t² + d*t³
+
 std::vector<double> SeriesClass::fitPolynomial3() const {
     if (data.empty() || data.size() < 4) return {0.0, 0.0, 0.0, 0.0};
     
@@ -927,7 +923,7 @@ std::vector<double> SeriesClass::fitPolynomial3() const {
         sum_t3y += t3 * data[t];
     }
     
-    // Матрица системы уравнений 4x4
+    
     double mat[4][4] = {
         {static_cast<double>(n), sum_t, sum_t2, sum_t3},
         {sum_t, sum_t2, sum_t3, sum_t4},
@@ -937,9 +933,9 @@ std::vector<double> SeriesClass::fitPolynomial3() const {
     
     double vec[4] = {sum_y, sum_ty, sum_t2y, sum_t3y};
     
-    // Решаем методом Гаусса
+    
     for (int i = 0; i < 4; ++i) {
-        // Поиск главного элемента
+        
         int max_row = i;
         for (int k = i + 1; k < 4; ++k) {
             if (std::abs(mat[k][i]) > std::abs(mat[max_row][i])) {
@@ -947,7 +943,7 @@ std::vector<double> SeriesClass::fitPolynomial3() const {
             }
         }
         
-        // Перестановка строк
+        
         for (int k = i; k < 4; ++k) {
             std::swap(mat[i][k], mat[max_row][k]);
         }
@@ -957,7 +953,7 @@ std::vector<double> SeriesClass::fitPolynomial3() const {
             return {0.0, 0.0, 0.0, 0.0};
         }
         
-        // Нормализация
+        
         for (int k = i + 1; k < 4; ++k) {
             double factor = mat[k][i] / mat[i][i];
             for (int j = i; j < 4; ++j) {
@@ -967,7 +963,7 @@ std::vector<double> SeriesClass::fitPolynomial3() const {
         }
     }
     
-    // Обратный ход
+    
     double coeffs[4];
     for (int i = 3; i >= 0; --i) {
         coeffs[i] = vec[i];
@@ -980,7 +976,7 @@ std::vector<double> SeriesClass::fitPolynomial3() const {
     return {coeffs[0], coeffs[1], coeffs[2], coeffs[3]};
 }
 
-// Прогнозирование для полинома 2-го порядка
+
 std::vector<double> SeriesClass::predictPolynomial2(const std::vector<double>& coeffs) const {
     std::vector<double> predictions;
     if (coeffs.size() != 3) return predictions;
@@ -996,7 +992,7 @@ std::vector<double> SeriesClass::predictPolynomial2(const std::vector<double>& c
     return predictions;
 }
 
-// Прогнозирование для полинома 3-го порядка
+
 std::vector<double> SeriesClass::predictPolynomial3(const std::vector<double>& coeffs) const {
     std::vector<double> predictions;
     if (coeffs.size() != 4) return predictions;
@@ -1014,7 +1010,7 @@ std::vector<double> SeriesClass::predictPolynomial3(const std::vector<double>& c
     return predictions;
 }
 
-// В SeriesClass.cpp реализуем:
+
 
 double SeriesClass::calculateSkewness() const {
     if (data.size() < 3) return 0.0;
@@ -1103,7 +1099,7 @@ std::pair<size_t, bool> SeriesClass::analyzeTurningPoints() const {
     double variance = (16.0 * data.size() - 29.0) / 90.0;
     double statistic = std::abs(turningPoints - expected) / std::sqrt(variance);
     
-    bool isRandom = statistic < 1.96; // для α=0.05
+    bool isRandom = statistic < 1.96; 
     
     return { turningPoints, isRandom };
 }
@@ -1120,13 +1116,13 @@ std::pair<size_t, bool> SeriesClass::analyzeSeriesTest() const {
         median = sorted[sorted.size()/2];
     }
     
-    // Преобразуем в последовательность знаков
+    
     std::vector<int> signs;
     for (double value : data) {
         signs.push_back(value > median ? 1 : -1);
     }
     
-    // Считаем серии
+    
     size_t seriesCount = 1;
     for (size_t i = 1; i < signs.size(); ++i) {
         if (signs[i] != signs[i-1]) {
@@ -1134,7 +1130,7 @@ std::pair<size_t, bool> SeriesClass::analyzeSeriesTest() const {
         }
     }
     
-    // Проверяем по критерию
+    
     size_t n1 = std::count(signs.begin(), signs.end(), 1);
     size_t n2 = signs.size() - n1;
     
@@ -1143,7 +1139,7 @@ std::pair<size_t, bool> SeriesClass::analyzeSeriesTest() const {
                      ((n1 + n2) * (n1 + n2) * (n1 + n2 - 1));
     
     double statistic = std::abs(seriesCount - expected) / std::sqrt(variance);
-    bool isRandom = statistic < 1.96; // для α=0.05
+    bool isRandom = statistic < 1.96; 
     
     return {seriesCount, isRandom};
 }
@@ -1156,33 +1152,33 @@ SeriesClass::ResidualAnalysisResult SeriesClass::analyzeResiduals() const {
         return result;
     }
     
-    // 1. Проверка случайности (критерий пиков)
+    
     auto [turningPoints, isRandomTurning] = analyzeTurningPoints();
     result.turningPointsCount = turningPoints;
     result.isRandomByTurningPoints = isRandomTurning;
     
-    // 2. Проверка случайности (критерий серий)
+    
     auto [seriesCount, isRandomSeries] = analyzeSeriesTest();
     result.seriesCount = seriesCount;
     result.isRandomBySeries = isRandomSeries;
     
-    // 3. Проверка нормальности (асимметрия и эксцесс)
+    
     result.skewness = calculateSkewness();
     result.kurtosis = calculateKurtosis();
     result.isNormalByMoments = (std::abs(result.skewness) < 1.0 && std::abs(result.kurtosis) < 1.0);
     
-    // 4. Проверка нормальности (RS-критерий)
+    
     result.rSStatistic = calculateRSStatistic();
     size_t n = data.size();
-    bool isNormalRS = (result.rSStatistic > 6.5 && result.rSStatistic < 8.5); // для n > 20
+    bool isNormalRS = (result.rSStatistic > 6.5 && result.rSStatistic < 8.5); 
     
     if (n <= 20) {
-        // Более строгие границы для малых выборок
+        
         isNormalRS = (result.rSStatistic > 2.0 && result.rSStatistic < 4.0);
     }
     result.isNormalByRS = isNormalRS;
     
-    // 5. Проверка равенства нулю матожидания (критерий Стьюдента)
+    
     result.mean = std::accumulate(data.begin(), data.end(), 0.0) / n;
     double sumSq = 0.0;
     for (double value : data) {
@@ -1192,19 +1188,19 @@ SeriesClass::ResidualAnalysisResult SeriesClass::analyzeResiduals() const {
     
     if (stdDev > 0) {
         result.tStatistic = std::abs(result.mean) / (stdDev / std::sqrt(n));
-        result.hasZeroMean = (result.tStatistic < 2.0); // для α=0.05
+        result.hasZeroMean = (result.tStatistic < 2.0); 
     } else {
         result.tStatistic = 0.0;
         result.hasZeroMean = true;
     }
     
-    // 6. Проверка независимости (критерий Дарбина-Уотсона)
+    
     result.durbinWatsonStatistic = calculateDurbinWatson();
-    // Для α=0.05: dL ≈ 1.5, dU ≈ 1.7 (зависит от n и числа параметров)
+    
     result.isIndependent = (result.durbinWatsonStatistic > 1.5 && 
                            result.durbinWatsonStatistic < 2.5);
     
-    // 7. Общий вывод об адекватности
+    
     result.isAdequate = result.isRandomByTurningPoints &&
                        result.isRandomBySeries &&
                        result.isNormalByMoments &&
@@ -1212,7 +1208,7 @@ SeriesClass::ResidualAnalysisResult SeriesClass::analyzeResiduals() const {
                        result.hasZeroMean &&
                        result.isIndependent;
     
-    // Формируем текстовый вывод
+    
     std::stringstream conclusion;
     conclusion << "=== RESIDUAL ANALYSIS CONCLUSION ===\n";
     conclusion << "Randomness (turning points): " << (result.isRandomByTurningPoints ? "YES" : "NO") << "\n";
@@ -1228,27 +1224,27 @@ SeriesClass::ResidualAnalysisResult SeriesClass::analyzeResiduals() const {
     return result;
 }
 
-// SeriesClass.cpp (добавления в конец файла, после существующих реализаций)
 
-// Вспомогательная функция для вычисления t-критического значения (приближение для больших n, нормальное распределение)
+
+
 double SeriesClass::getTCritical(double alpha, size_t df) const {
-    // Для простоты используем приближение нормального распределения (z=1.96 для 95%), так как df обычно большой
-    // Для точности можно реализовать таблицу или аппроксимацию, но для лабораторной хватит
+    
+    
     if (df < 2) return 0.0;
-    return 1.96; // Для alpha=0.05, двусторонний
+    return 1.96; 
 }
 
-// Реализация forecastLinear
+
 std::vector<SeriesClass::Forecast> SeriesClass::forecastLinear(size_t steps, double alpha) const {
     std::vector<Forecast> results;
     if (data.empty()) return results;
 
     size_t n = data.size();
     
-    // Fit linear: a + b*t
+    
     auto [a, b] = fitLinearPolynomial();
     
-    // Вычисление необходимых статистик для интервала
+    
     double sum_t = 0.0, sum_t2 = 0.0, sum_y = 0.0, sum_ty = 0.0;
     for (size_t i = 0; i < n; ++i) {
         double t = static_cast<double>(i);
@@ -1262,7 +1258,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastLinear(size_t steps, dou
     double mean_t = sum_t / n;
     double Sxx = sum_t2 - (sum_t * sum_t) / n;
     
-    // MSE
+    
     double SSE = 0.0;
     for (size_t i = 0; i < n; ++i) {
         double t = static_cast<double>(i);
@@ -1274,12 +1270,12 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastLinear(size_t steps, dou
     
     double t_crit = getTCritical(alpha, n - 2);
     
-    // Прогноз на steps вперед
+    
     for (size_t k = 1; k <= steps; ++k) {
-        double t_future = static_cast<double>(n + k - 1); // t начинается с 0
+        double t_future = static_cast<double>(n + k - 1); 
         double point = a + b * t_future;
         
-        // Стандартная ошибка прогноза (prediction interval)
+        
         double se_pred = std_err * std::sqrt(1.0 + 1.0 / n + (t_future - mean_t) * (t_future - mean_t) / Sxx);
         
         double half_width = t_crit * se_pred;
@@ -1292,21 +1288,21 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastLinear(size_t steps, dou
     return results;
 }
 
-// Реализация forecastPolynomial2
+
 std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps, double alpha) const {
     std::vector<Forecast> results;
-    if (data.size() < 3) return results; // Нужно минимум 3 точки для poly2
+    if (data.size() < 3) return results; 
 
     size_t n = data.size();
     
-    // Fit poly2: a + b*t + c*t^2
+    
     auto coeffs = fitPolynomial2();
     if (coeffs.size() != 3) return results;
     double a = coeffs[0], b = coeffs[1], c = coeffs[2];
     
-    // Для интервала в множественной регрессии нужно X matrix
-    // Построим матрицу X (n x 3): 1, t, t^2
-    // Но поскольку Gauss уже решен, вычислим SSE и var
+    
+    
+    
     double SSE = 0.0;
     for (size_t i = 0; i < n; ++i) {
         double t = static_cast<double>(i);
@@ -1314,15 +1310,15 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
         double y_hat = a + b * t + c * t2;
         SSE += (data[i] - y_hat) * (data[i] - y_hat);
     }
-    double MSE = SSE / (n - 3); // df = n - (k+1), k=2
+    double MSE = SSE / (n - 3); 
     double std_err = std::sqrt(MSE);
     
-    // Для se_pred нужно x_future * (X^T X)^{-1} * x_future^T * MSE + MSE (для prediction)
-    // Так что нужно вычислить inverse of X^T X
-    // X^T X is the matrix from fit: 
-    // [ n     sum_t   sum_t2 ]
-    // [ sum_t  sum_t2  sum_t3 ]
-    // [ sum_t2 sum_t3  sum_t4 ]
+    
+    
+    
+    
+    
+    
     
     double sum_t = 0.0, sum_t2 = 0.0, sum_t3 = 0.0, sum_t4 = 0.0;
     for (size_t i = 0; i < n; ++i) {
@@ -1336,17 +1332,17 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
         sum_t4 += t4;
     }
     
-    // Матрица X^T X
+    
     double XtX[3][3] = {
         {static_cast<double>(n), sum_t, sum_t2},
         {sum_t, sum_t2, sum_t3},
         {sum_t2, sum_t3, sum_t4}
     };
     
-    // Вычислим inverse XtX (поскольку 3x3, можно вручную или Gauss)
-    // Для простоты используем формулу для 3x3 inverse, но реализуем Gauss для inverse
-    // Сначала копия для inverse
-    double mat[3][6]; // Augmented для inverse
+    
+    
+    
+    double mat[3][6]; 
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
             mat[i][j] = XtX[i][j];
@@ -1354,11 +1350,11 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
         }
     }
     
-    // Gauss-Jordan
+    
     for (int i = 0; i < 3; ++i) {
-        // Pivot
+        
         if (std::abs(mat[i][i]) < 1e-12) {
-            // Singular, return empty
+            
             return results;
         }
         double pivot = mat[i][i];
@@ -1375,7 +1371,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
         }
     }
     
-    // Inverse в mat[:,3:6]
+    
     double invXtX[3][3];
     for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -1385,16 +1381,16 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
     
     double t_crit = getTCritical(alpha, n - 3);
     
-    // Для каждого future step
+    
     for (size_t k = 1; k <= steps; ++k) {
         double t_future = static_cast<double>(n + k - 1);
         double t2_future = t_future * t_future;
         double point = a + b * t_future + c * t2_future;
         
-        // x_future = [1, t, t^2]
+        
         double x[3] = {1.0, t_future, t2_future};
         
-        // x * invXtX * x^T
+        
         double quad_form = 0.0;
         for (int i = 0; i < 3; ++i) {
             double temp = 0.0;
@@ -1404,7 +1400,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
             quad_form += temp * x[i];
         }
         
-        // Для prediction interval: sqrt( MSE * (1 + quad_form) )
+        
         double se_pred = std_err * std::sqrt(1.0 + quad_form);
         
         double half_width = t_crit * se_pred;
@@ -1417,21 +1413,21 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial2(size_t steps
     return results;
 }
 
-// SeriesClass.cpp (добавления в конец файла, после существующих реализаций)
 
-// Реализация forecastPolynomial3
+
+
 std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps, double alpha) const {
     std::vector<Forecast> results;
-    if (data.size() < 4) return results; // Нужно минимум 4 точки для poly3
+    if (data.size() < 4) return results; 
 
     size_t n = data.size();
     
-    // Fit poly3: a + b*t + c*t^2 + d*t^3
+    
     auto coeffs = fitPolynomial3();
     if (coeffs.size() != 4) return results;
     double a = coeffs[0], b = coeffs[1], c = coeffs[2], d = coeffs[3];
     
-    // Вычисление SSE
+    
     double SSE = 0.0;
     for (size_t i = 0; i < n; ++i) {
         double t = static_cast<double>(i);
@@ -1440,10 +1436,10 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
         double y_hat = a + b * t + c * t2 + d * t3;
         SSE += (data[i] - y_hat) * (data[i] - y_hat);
     }
-    double MSE = SSE / (n - 4); // df = n - (k+1), k=3
+    double MSE = SSE / (n - 4); 
     double std_err = std::sqrt(MSE);
     
-    // Суммы для XtX: sum_t^0 to sum_t^6
+    
     double sum_t0 = static_cast<double>(n);
     double sum_t = 0.0, sum_t2 = 0.0, sum_t3 = 0.0, sum_t4 = 0.0, sum_t5 = 0.0, sum_t6 = 0.0;
     for (size_t i = 0; i < n; ++i) {
@@ -1461,7 +1457,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
         sum_t6 += t6;
     }
     
-    // Матрица XtX 4x4
+    
     double XtX[4][4] = {
         {sum_t0, sum_t, sum_t2, sum_t3},
         {sum_t, sum_t2, sum_t3, sum_t4},
@@ -1469,7 +1465,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
         {sum_t3, sum_t4, sum_t5, sum_t6}
     };
     
-    // Augmented matrix для inverse: 4x8
+    
     double mat[4][8];
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -1478,16 +1474,16 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
         }
     }
     
-    // Gauss-Jordan elimination
+    
     for (int i = 0; i < 4; ++i) {
-        // Find pivot
+        
         int pivot_row = i;
         for (int k = i + 1; k < 4; ++k) {
             if (std::abs(mat[k][i]) > std::abs(mat[pivot_row][i])) {
                 pivot_row = k;
             }
         }
-        // Swap rows
+        
         if (pivot_row != i) {
             for (int j = 0; j < 8; ++j) {
                 std::swap(mat[i][j], mat[pivot_row][j]);
@@ -1495,7 +1491,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
         }
         
         if (std::abs(mat[i][i]) < 1e-12) {
-            // Singular matrix
+            
             return results;
         }
         
@@ -1514,7 +1510,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
         }
     }
     
-    // Inverse в mat[:,4:8]
+    
     double invXtX[4][4];
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
@@ -1524,17 +1520,17 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
     
     double t_crit = getTCritical(alpha, n - 4);
     
-    // Для каждого future step
+    
     for (size_t k = 1; k <= steps; ++k) {
         double t_future = static_cast<double>(n + k - 1);
         double t2_future = t_future * t_future;
         double t3_future = t2_future * t_future;
         double point = a + b * t_future + c * t2_future + d * t3_future;
         
-        // x_future = [1, t, t^2, t^3]
+        
         double x[4] = {1.0, t_future, t2_future, t3_future};
         
-        // x * invXtX * x^T
+        
         double quad_form = 0.0;
         for (int i = 0; i < 4; ++i) {
             double temp = 0.0;
@@ -1544,7 +1540,7 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
             quad_form += temp * x[i];
         }
         
-        // se_pred = sqrt( MSE * (1 + quad_form) )
+        
         double se_pred = std_err * std::sqrt(1.0 + quad_form);
         
         double half_width = t_crit * se_pred;
@@ -1556,4 +1552,108 @@ std::vector<SeriesClass::Forecast> SeriesClass::forecastPolynomial3(size_t steps
     }
     
     return results;
+}
+
+
+
+
+SeriesClass::ForecastBacktestResult SeriesClass::backtestLinear(double train_fraction) const {
+    ForecastBacktestResult result;
+    if (data.size() < 10) return result; 
+
+    size_t n = data.size();
+    size_t split = static_cast<size_t>(train_fraction * n);
+    if (split < 2 || n - split < 2) return result;
+
+    
+    std::vector<double> train_values(data.begin(), data.begin() + split);
+    std::vector<std::string> train_times(timestamps.begin(), timestamps.begin() + split);
+    SeriesClass train_series(train_values, train_times, name + "_train");
+
+    auto fixed_forecasts = train_series.forecastLinear(n - split);
+    result.fixed_points.reserve(fixed_forecasts.size());
+    for (const auto& f : fixed_forecasts) {
+        result.fixed_points.push_back(f.point);
+    }
+    result.last_fixed_interval = fixed_forecasts.back();
+
+    
+    result.adaptive_points.reserve(n - split);
+    Forecast last_adapt;
+    for (size_t k = 0; k < n - split; ++k) {
+        size_t curr_end = split + k; 
+        std::vector<double> curr_values(data.begin(), data.begin() + curr_end);
+        std::vector<std::string> curr_times(timestamps.begin(), timestamps.begin() + curr_end);
+        SeriesClass curr_series(curr_values, curr_times, name + "_curr");
+
+        auto one_step = curr_series.forecastLinear(1);
+        result.adaptive_points.push_back(one_step[0].point);
+        if (k == n - split - 1) {
+            last_adapt = one_step[0];
+        }
+    }
+    result.last_adaptive_interval = last_adapt;
+
+    
+    double sum_sq_fixed = 0.0, sum_sq_adapt = 0.0;
+    for (size_t i = 0; i < n - split; ++i) {
+        double actual = data[split + i];
+        sum_sq_fixed += (actual - result.fixed_points[i]) * (actual - result.fixed_points[i]);
+        sum_sq_adapt += (actual - result.adaptive_points[i]) * (actual - result.adaptive_points[i]);
+    }
+    result.mse_fixed = sum_sq_fixed / (n - split);
+    result.mse_adapt = sum_sq_adapt / (n - split);
+
+    return result;
+}
+
+
+SeriesClass::ForecastBacktestResult SeriesClass::backtestPolynomial3(double train_fraction) const {
+    ForecastBacktestResult result;
+    if (data.size() < 10) return result;
+
+    size_t n = data.size();
+    size_t split = static_cast<size_t>(train_fraction * n);
+    if (split < 4 || n - split < 2) return result; 
+
+    
+    std::vector<double> train_values(data.begin(), data.begin() + split);
+    std::vector<std::string> train_times(timestamps.begin(), timestamps.begin() + split);
+    SeriesClass train_series(train_values, train_times, name + "_train");
+
+    auto fixed_forecasts = train_series.forecastPolynomial3(n - split);
+    result.fixed_points.reserve(fixed_forecasts.size());
+    for (const auto& f : fixed_forecasts) {
+        result.fixed_points.push_back(f.point);
+    }
+    result.last_fixed_interval = fixed_forecasts.back();
+
+    
+    result.adaptive_points.reserve(n - split);
+    Forecast last_adapt;
+    for (size_t k = 0; k < n - split; ++k) {
+        size_t curr_end = split + k;
+        std::vector<double> curr_values(data.begin(), data.begin() + curr_end);
+        std::vector<std::string> curr_times(timestamps.begin(), timestamps.begin() + curr_end);
+        SeriesClass curr_series(curr_values, curr_times, name + "_curr");
+
+        auto one_step = curr_series.forecastPolynomial3(1);
+        result.adaptive_points.push_back(one_step[0].point);
+        if (k == n - split - 1) {
+            last_adapt = one_step[0];
+        }
+    }
+    result.last_adaptive_interval = last_adapt;
+
+    
+    double sum_sq_fixed = 0.0, sum_sq_adapt = 0.0;
+    for (size_t i = 0; i < n - split; ++i) {
+        double actual = data[split + i];
+        sum_sq_fixed += (actual - result.fixed_points[i]) * (actual - result.fixed_points[i]);
+        sum_sq_adapt += (actual - result.adaptive_points[i]) * (actual - result.adaptive_points[i]);
+    }
+    result.mse_fixed = sum_sq_fixed / (n - split);
+    result.mse_adapt = sum_sq_adapt / (n - split);
+
+    return result;
 }
