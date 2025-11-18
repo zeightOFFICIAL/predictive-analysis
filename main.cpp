@@ -77,7 +77,6 @@ static void displayMenu() {
     std::cout << "37. Time series decomposition\n";
     
     std::cout << "\n" << BOLD << CYAN_COLOR << "========= GROWTH CURVE ANALYSIS ========" << RESET << "\n";
-    std::cout << "38. Analyze growth curve characteristics\n";
     std::cout << "39. Fit and compare growth curves\n";
     
     std::cout << "\n" << BOLD << MAGENTA_COLOR << "====== RESIDUAL COMPONENT ANALYSIS ======" << RESET << "\n";
@@ -88,7 +87,7 @@ static void displayMenu() {
     std::cout << "42. Run Brown's adaptive model forecast analysis\n";
     
     std::cout << "\n0. Exit program\n";
-    std::cout << "Enter your choice (0-40): ";
+    std::cout << "Enter your choice (0-42): ";
 }
 
 static void displayItemsMenu(const std::vector<std::string>& items) {
@@ -197,7 +196,7 @@ static SeriesControl selectTimeSeries(const RecordClass& data) {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         std::cout << RED_COLOR << "Invalid input! Please enter a number.\n" << RESET;
-        return SeriesControl(data, RecordClass::GOLD); 
+        return SeriesControl(data, RecordClass::GOLD);
     }
 
     if (choice == 0) return SeriesControl(data, RecordClass::GOLD);
@@ -279,10 +278,8 @@ static void runTimeSeriesAnalysis(const RecordClass& data) {
 static void runResidualAnalysis(const RecordClass& data) {
     std::cout << MAGENTA_COLOR << "\n=== RESIDUAL COMPONENT ANALYSIS ===" << RESET << std::endl;
     
-    // Выбор временного ряда для анализа
     SeriesControl seriesControl = selectTimeSeries(data);
     
-    // Сначала выполняем декомпозицию, чтобы получить остаточную компоненту
     std::cout << CYAN_COLOR << "Performing time series decomposition..." << RESET << std::endl;
     
     int period;
@@ -294,24 +291,18 @@ static void runResidualAnalysis(const RecordClass& data) {
         period = 365;
     }
     
-    // Выполняем декомпозицию
     seriesControl.plotDecomposition(period);
     
-    // Теперь анализируем остаточную компоненту
     std::cout << CYAN_COLOR << "\nAnalyzing residual component adequacy..." << RESET << std::endl;
     
-    // Получаем остаточную компоненту из декомпозиции
     auto decomposition = seriesControl.getSeries().decomposeTimeSeries(period);
     
-    // Создаем временный ряд из остаточной компоненты
     SeriesClass residualsSeries(decomposition.finalResidual, 
                                seriesControl.getSeries().getTimestamps(), 
                                seriesControl.getSeries().getName() + " - Residuals");
     
-    // Анализируем остатки
     auto analysis = residualsSeries.analyzeResiduals();
     
-    // Выводим результаты
     std::cout << "\n" << GREEN_COLOR << "=== RESIDUAL ANALYSIS RESULTS ===" << RESET << std::endl;
     std::cout << "Residual series: " << residualsSeries.getName() << std::endl;
     std::cout << "Number of points: " << residualsSeries.size() << std::endl;
@@ -352,16 +343,14 @@ static void runResidualAnalysis(const RecordClass& data) {
               << RESET << std::endl;
     
     if (analysis.isAdequate) {
-        std::cout << GREEN_COLOR << "✓ The trend model is adequate - residuals behave like white noise" << RESET << std::endl;
+        std::cout << GREEN_COLOR << "The trend model is adequate - residuals behave like white noise" << RESET << std::endl;
     } else {
-        std::cout << RED_COLOR << "✗ The trend model is not adequate - residuals show systematic patterns" << RESET << std::endl;
+        std::cout << RED_COLOR << "The trend model is not adequate - residuals show systematic patterns" << RESET << std::endl;
         std::cout << YELLOW_COLOR << "Recommendation: Consider using a different model or including additional factors" << RESET << std::endl;
     }
     
-    // Строим графики для визуального анализа остатков
     std::cout << CYAN_COLOR << "\nGenerating residual analysis plots..." << RESET << std::endl;
     
-    // Создаем временный SeriesControl для остатков, чтобы использовать метод построения графиков
     SeriesControl residualControl(seriesControl);
     residualControl.plotResiduals(residualsSeries);
 }
@@ -385,7 +374,6 @@ int main(int argc, char* argv[]) {
     StatisticsControl statsControl(stats);
     RegressionControl regControl(statsControl);
 
-     
     const std::vector<std::string> significantPredictors_set1 = {"NG=F_closing_price"};
     const std::vector<std::string> significantPredictors_set2 = {"ZS=F_closing_price", "ZC=F_closing_price", "ZW=F_closing_price"};
     const std::vector<std::string> significantPredictors_set3 = {"SI=F_closing_price", "HG=F_closing_price", "PA=F_closing_price", "PL=F_closing_price"};
@@ -407,7 +395,6 @@ int main(int argc, char* argv[]) {
         std::cin.ignore();
 
         switch (choice) {
-             
             case 1: { 
                 auto dates = recordControl.getAvailableDatesFormatted();
                 if (dates.empty()) {
@@ -432,7 +419,6 @@ int main(int argc, char* argv[]) {
                 statsControl.showComparativeAnalysis();
                 break;
 
-             
             case 5:
                 statsControl.showGoldCorrelations();
                 break;
@@ -447,7 +433,6 @@ int main(int argc, char* argv[]) {
                 statsControl.generateCorrelationMatrix();
                 break;
 
-             
             case 8:
                 regControl.runSilverGoldRegression();
                 break;
@@ -484,7 +469,6 @@ int main(int argc, char* argv[]) {
                 regControl.runMultipleRegressionSelected(significantPredictors_set5);
                 break;
 
-             
             case 17:
                 std::cout << CYAN_COLOR << "\nGenerating histograms..." << RESET << "\n";
                 statsControl.generateHistograms();
@@ -495,7 +479,6 @@ int main(int argc, char* argv[]) {
                 statsControl.generateBoxplots();
                 break;
 
-             
             case 19:
                 recordControl.displaySanctionsInfo();
                 break;
@@ -548,7 +531,6 @@ int main(int argc, char* argv[]) {
                 regControl.runMultipleRegressionWithDummy(significantPredictors_set5, true);
                 break;
 
-            
             case 32: {
                 SeriesControl seriesControl = selectTimeSeries(data);
                 seriesControl.displaySeriesInfo();
@@ -596,14 +578,7 @@ int main(int argc, char* argv[]) {
 
             case 37: {
                 SeriesControl seriesControl = selectTimeSeries(data);
-                seriesControl.plotDecomposition(365); 
-                break;
-            }
-
-            case 38: {
-                SeriesControl seriesControl = selectTimeSeries(data);
-                auto& series = seriesControl.getSeries();
-                series.analyzeGrowthCurveCharacteristics();
+                seriesControl.plotDecomposition(365);
                 break;
             }
 
@@ -623,9 +598,10 @@ int main(int argc, char* argv[]) {
                 seriesControl.forecastAnalysis(3, 7);
                 break;
             }
+
             case 42: {
                 SeriesControl seriesControl = selectTimeSeries(data);
-                seriesControl.forecastAnalysisBrown(0.3, 0.8);  
+                seriesControl.forecastAnalysisBrown(0.3, 0.8);
                 break;
             }
 
@@ -634,7 +610,7 @@ int main(int argc, char* argv[]) {
                 return 0;
 
             default:
-                std::cout << RED_COLOR << "Invalid option! Please choose 0-40.\n" << RESET;
+                std::cout << RED_COLOR << "Invalid option! Please choose 0-42.\n" << RESET;
         }
     }
 }
