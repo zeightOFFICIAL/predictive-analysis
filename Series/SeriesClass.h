@@ -53,8 +53,22 @@ public:
         bool isAdequate;
         std::string conclusion;
     };
+struct Forecast {
+    double point;
+    double lower;
+    double upper;
+};
+struct ForecastBacktestResult {
+        std::vector<double> fixed_points;
+        std::vector<double> adaptive_points;
+        double mse_fixed = 0.0;
+        double mse_adapt = 0.0;
+        Forecast last_fixed_interval;
+        Forecast last_adaptive_interval;
+    };
 
-
+    ForecastBacktestResult backtestExponential(double alpha, double train_fraction) const;
+    std::vector<Forecast> forecastExponential(size_t steps, double alpha, double confidence_level = 0.95) const;
 private:
     std::vector<double> data;
     std::vector<std::string> timestamps;
@@ -66,6 +80,8 @@ private:
     double calculateDurbinWatson() const;
     std::pair<size_t, bool> analyzeTurningPoints() const;
     std::pair<size_t, bool> analyzeSeriesTest() const;
+
+    
 
 public:
     
@@ -130,25 +146,14 @@ public:
 
     ResidualAnalysisResult analyzeResiduals() const;
 
-    struct Forecast {
-        double point;
-        double lower;
-        double upper;
-    };
+
 
     std::vector<Forecast> forecastLinear(size_t steps, double alpha = 0.05) const;
     std::vector<Forecast> forecastPolynomial2(size_t steps, double alpha = 0.05) const;
     std::vector<Forecast> forecastPolynomial3(size_t steps, double alpha = 0.05) const;
     double getTCritical(double alpha, size_t df) const;
 
-    struct ForecastBacktestResult {
-        std::vector<double> fixed_points;
-        std::vector<double> adaptive_points;
-        Forecast last_fixed_interval;
-        Forecast last_adaptive_interval;
-        double mse_fixed;
-        double mse_adapt;
-    };
+
     ForecastBacktestResult backtestLinear(double train_fraction = 0.8) const;
     ForecastBacktestResult backtestPolynomial3(double train_fraction = 0.8) const;
 

@@ -85,6 +85,7 @@ static void displayMenu() {
 
     std::cout << "\n" << BOLD << YELLOW_COLOR << "========= FORECAST ANALYSIS ========" << RESET << "\n";
     std::cout << "41. Run forecast analysis (3 and 7 steps ahead)\n";
+    std::cout << "42. Run Brown's adaptive model forecast analysis\n";
     
     std::cout << "\n0. Exit program\n";
     std::cout << "Enter your choice (0-40): ";
@@ -620,6 +621,11 @@ int main(int argc, char* argv[]) {
             case 41: {
                 SeriesControl seriesControl = selectTimeSeries(data);
                 seriesControl.forecastAnalysis(3, 7);
+                break;
+            }
+            case 42: {
+                SeriesControl seriesControl = selectTimeSeries(data);
+                seriesControl.forecastAnalysisBrown(0.3, 0.8);  
                 break;
             }
 

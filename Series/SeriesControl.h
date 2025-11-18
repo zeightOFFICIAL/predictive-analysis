@@ -76,6 +76,8 @@ public:
 
 
 void forecastAnalysis(size_t shortStep = 3, size_t longStep = 7) const;
+void forecastAnalysisBrown(double alpha = 0.3, double train_fraction = 0.8);
+void plotForecastBrown(const SeriesClass::ForecastBacktestResult& result) const;
 };
 
 #endif 

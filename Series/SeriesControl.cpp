@@ -1160,3 +1160,106 @@ void SeriesControl::forecastAnalysis(size_t shortStep, size_t longStep) const {
     }
 
 }
+
+void SeriesControl::forecastAnalysisBrown(double alpha, double train_fraction) {
+    std::cout << "=== BROWN'S MODEL FORECAST ANALYSIS ===" << std::endl;
+    std::cout << "Series: " << series.getName() << std::endl;
+    std::cout << "Alpha: " << alpha << ", Train fraction: " << train_fraction << std::endl;
+
+    auto result = series.backtestExponential(alpha, train_fraction);
+
+    if (result.fixed_points.empty()) {
+        std::cout << "Error: Insufficient data for backtesting." << std::endl;
+        return;
+    }
+
+    // Вывод интервального прогноза для последней точки
+    std::cout << "\nLAST POINT INTERVAL FORECAST (Fixed model):" << std::endl;
+    std::cout << "Point: " << result.last_fixed_interval.point
+              << ", Interval: [" << result.last_fixed_interval.lower << ", " << result.last_fixed_interval.upper << "]"
+              << ", Span: " << (result.last_fixed_interval.upper - result.last_fixed_interval.lower) << std::endl;
+
+    std::cout << "\nLAST POINT INTERVAL FORECAST (Adaptive model):" << std::endl;
+    std::cout << "Point: " << result.last_adaptive_interval.point
+              << ", Interval: [" << result.last_adaptive_interval.lower << ", " << result.last_adaptive_interval.upper << "]"
+              << ", Span: " << (result.last_adaptive_interval.upper - result.last_adaptive_interval.lower) << std::endl;
+
+    // MSE сравнение
+    std::cout << "\nMSE (Fixed): " << result.mse_fixed << std::endl;
+    std::cout << "MSE (Adaptive): " << result.mse_adapt << std::endl;
+
+    // Мотивированный вывод
+    std::cout << "\n=== QUALITY CONCLUSION ===" << std::endl;
+    if (result.mse_adapt < result.mse_fixed) {
+        std::cout << "Adaptive model is better (lower MSE: " << result.mse_adapt << " vs " << result.mse_fixed << "). "
+                  << "It adapts to new data, reducing error in dynamic series." << std::endl;
+    } else {
+        std::cout << "Fixed model is better or comparable (MSE: " << result.mse_fixed << " vs " << result.mse_adapt << "). "
+                  << "Series may be stable, no need for continuous adaptation." << std::endl;
+    }
+    double fixed_span = result.last_fixed_interval.upper - result.last_fixed_interval.lower;
+    double adapt_span = result.last_adaptive_interval.upper - result.last_adaptive_interval.lower;
+    if (adapt_span < fixed_span) {
+        std::cout << "Adaptive intervals are narrower (" << adapt_span << " vs " << fixed_span << "), indicating higher confidence." << std::endl;
+    } else {
+        std::cout << "Fixed intervals are narrower or similar (" << fixed_span << " vs " << adapt_span << "). Adaptive may overfit." << std::endl;
+    }
+    std::cout << "Overall: Brown's model suits short-term forecasts; for long-term, consider trends if MSE is high." << std::endl;
+
+    // Построение графика
+    plotForecastBrown(result);
+}
+
+void SeriesControl::plotForecastBrown(const SeriesClass::ForecastBacktestResult& result) const {
+    std::cout << "=== GENERATING BROWN'S FORECAST PLOT ===" << std::endl;
+
+    std::filesystem::create_directories("plots/forecast");
+
+    size_t n = series.size();
+    size_t split = n - result.fixed_points.size();  // Вычисляем split обратно
+
+    // Сохранение данных: original, fixed, adaptive
+    std::string originalFile = "plots/forecast/brown_original.dat";
+    saveDataToFile(series, originalFile);
+
+    std::string fixedFile = "plots/forecast/brown_fixed.dat";
+    std::ofstream fixedOut(fixedFile);
+    fixedOut << "# Index Value\n";
+    for (size_t i = split; i < n; ++i) {
+        fixedOut << i << " " << result.fixed_points[i - split] << "\n";
+    }
+    fixedOut.close();
+
+    std::string adaptiveFile = "plots/forecast/brown_adaptive.dat";
+    std::ofstream adaptOut(adaptiveFile);
+    adaptOut << "# Index Value\n";
+    for (size_t i = split; i < n; ++i) {
+        adaptOut << i << " " << result.adaptive_points[i - split] << "\n";
+    }
+    adaptOut.close();
+
+    // GNUplot скрипт
+    std::string scriptFile = "plots/forecast/brown_forecast.gnu";
+    std::ofstream script(scriptFile);
+    script << "set terminal pngcairo size 1600,800 enhanced font 'Arial,12'\n";
+    script << "set output 'plots/forecast/brown_forecast_comparison.png'\n";
+    script << "set title \"Brown's Model Forecast: " << series.getName() << "\"\n";    script << "set xlabel 'Time Index'\n";
+    script << "set ylabel 'Value'\n";
+    script << "set grid\n";
+    script << "set key outside\n";
+    script << "plot '" << originalFile << "' using 1:3 with lines lw 2 title 'Original', \\\n";
+    script << "     '" << fixedFile << "' using 1:2 with lines lw 2 lc rgb 'red' title 'Fixed (learning stopped)', \\\n";
+    script << "     '" << adaptiveFile << "' using 1:2 with lines lw 2 lc rgb 'green' title 'Adaptive (continuous learning)'\n";
+    script.close();
+
+    std::string command = "gnuplot \"" + scriptFile + "\"";
+    int res = std::system(command.c_str());
+    if (res == 0) {
+        std::cout << "Plot saved: plots/forecast/brown_forecast_comparison.png" << std::endl;
+    } else {
+        std::cerr << "GNUplot error." << std::endl;
+    }
+
+    // Cleanup
+    cleanupDataFiles({originalFile, fixedFile, adaptiveFile, scriptFile});
+}

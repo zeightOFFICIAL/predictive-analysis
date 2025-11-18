@@ -1657,3 +1657,91 @@ SeriesClass::ForecastBacktestResult SeriesClass::backtestPolynomial3(double trai
 
     return result;
 }
+
+std::vector<SeriesClass::Forecast> SeriesClass::forecastExponential(size_t steps, double alpha, double confidence_level) const {
+    std::vector<Forecast> results;
+    if (data.empty()) return results;
+
+    size_t n = data.size();
+    std::vector<double> smoothed = exponentialSmoothing(alpha);
+    if (smoothed.empty()) return results;
+
+    double level = smoothed.back();
+
+    std::vector<double> residuals;
+    residuals.reserve(n - 1);
+    for (size_t i = 1; i < n; ++i) {
+        double one_step_forecast = smoothed[i - 1];
+        residuals.push_back(data[i] - one_step_forecast);
+    }
+
+    if (residuals.empty()) return results;
+
+    double sum_sq = 0.0;
+    double mean_res = std::accumulate(residuals.begin(), residuals.end(), 0.0) / residuals.size();
+    for (double res : residuals) {
+        sum_sq += (res - mean_res) * (res - mean_res);
+    }
+    double variance = sum_sq / (residuals.size() - 1);
+    double std_err = std::sqrt(variance);
+
+    double t_crit = getTCritical(1.0 - confidence_level, residuals.size() - 1);
+
+    for (size_t k = 1; k <= steps; ++k) {
+        double point = level;
+        double se_pred = std_err * std::sqrt(1.0 + (1.0 - alpha) * (1.0 - alpha));
+        double half_width = t_crit * se_pred * std::sqrt(static_cast<double>(k));
+        double lower = point - half_width;
+        double upper = point + half_width;
+        results.push_back({point, lower, upper});
+    }
+
+    return results;
+}
+
+SeriesClass::ForecastBacktestResult SeriesClass::backtestExponential(double alpha, double train_fraction) const {
+    ForecastBacktestResult result;
+    if (data.size() < 10) return result;
+
+    size_t n = data.size();
+    size_t split = static_cast<size_t>(train_fraction * n);
+    if (split < 2 || n - split < 2) return result;
+
+    std::vector<double> train_values(data.begin(), data.begin() + split);
+    std::vector<std::string> train_times(timestamps.begin(), timestamps.begin() + split);
+    SeriesClass train_series(train_values, train_times, name + "_train");
+
+    std::vector<double> train_smoothed = train_series.exponentialSmoothing(alpha);
+    double fixed_level = train_smoothed.back();
+    result.fixed_points.resize(n - split, fixed_level);
+
+    auto fixed_forecasts = train_series.forecastExponential(n - split, alpha);
+    result.last_fixed_interval = fixed_forecasts.back();
+
+    result.adaptive_points.reserve(n - split);
+    Forecast last_adapt;
+    for (size_t k = 0; k < n - split; ++k) {
+        size_t curr_end = split + k;
+        std::vector<double> curr_values(data.begin(), data.begin() + curr_end);
+        std::vector<std::string> curr_times(timestamps.begin(), timestamps.begin() + curr_end);
+        SeriesClass curr_series(curr_values, curr_times, name + "_curr");
+
+        auto one_step = curr_series.forecastExponential(1, alpha);
+        result.adaptive_points.push_back(one_step[0].point);
+        if (k == n - split - 1) {
+            last_adapt = one_step[0];
+        }
+    }
+    result.last_adaptive_interval = last_adapt;
+
+    double sum_sq_fixed = 0.0, sum_sq_adapt = 0.0;
+    for (size_t i = 0; i < n - split; ++i) {
+        double actual = data[split + i];
+        sum_sq_fixed += (actual - result.fixed_points[i]) * (actual - result.fixed_points[i]);
+        sum_sq_adapt += (actual - result.adaptive_points[i]) * (actual - result.adaptive_points[i]);
+    }
+    result.mse_fixed = sum_sq_fixed / (n - split);
+    result.mse_adapt = sum_sq_adapt / (n - split);
+
+    return result;
+}
