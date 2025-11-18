@@ -414,13 +414,94 @@ void SeriesControl::analyzeTrends() const {
     std::cout << "Series: " << series.getName() << std::endl;
     std::cout << "Number of points: " << series.size() << std::endl;
     std::cout << "\n1. MEAN DIFFERENCES METHOD:" << std::endl;
+    auto data = series.getData();
+    if (data.size() >= 3) {
+        size_t n = data.size();
+        size_t splitPoint = n / 2;
+        size_t n1 = splitPoint;
+        size_t n2 = n - splitPoint;
+        double mean1 = 0.0, mean2 = 0.0;
+        for (size_t i = 0; i < n1; ++i) mean1 += data[i];
+        mean1 /= n1;
+        for (size_t i = splitPoint; i < n; ++i) mean2 += data[i];
+        mean2 /= n2;
+        double var1 = 0.0, var2 = 0.0;
+        for (size_t i = 0; i < n1; ++i) var1 += (data[i] - mean1) * (data[i] - mean1);
+        var1 /= (n1 - 1);
+        for (size_t i = splitPoint; i < n; ++i) var2 += (data[i] - mean2) * (data[i] - mean2);
+        var2 /= (n2 - 1);
+        std::cout << "Dataset split: first half (" << n1 << " points), second half (" << n2 << " points)" << std::endl;
+        std::cout << "First half - Mean: " << mean1 << ", Variance: " << var1 << std::endl;
+        std::cout << "Second half - Mean: " << mean2 << ", Variance: " << var2 << std::endl;
+    }
     auto [has_trend_mean, t_statistic] = series.checkTrendMeanDifferences();
+    if (data.size() >= 3) {
+        size_t n = data.size();
+        size_t splitPoint = n / 2;
+        size_t n1 = splitPoint;
+        size_t n2 = n - splitPoint;
+        double mean1 = 0.0, mean2 = 0.0;
+        for (size_t i = 0; i < n1; ++i) mean1 += data[i];
+        mean1 /= n1;
+        for (size_t i = splitPoint; i < n; ++i) mean2 += data[i];
+        mean2 /= n2;
+        double var1 = 0.0, var2 = 0.0;
+        for (size_t i = 0; i < n1; ++i) var1 += (data[i] - mean1) * (data[i] - mean1);
+        var1 /= (n1 - 1);
+        for (size_t i = splitPoint; i < n; ++i) var2 += (data[i] - mean2) * (data[i] - mean2);
+        var2 /= (n2 - 1);
+        double F_statistic = (var1 > var2) ? var1 / var2 : var2 / var1;
+        double df1 = n1 - 1.0;
+        double df2 = n2 - 1.0;
+        double z = 1.96;
+        double f_critical = std::exp(z * std::sqrt(2.0 * (1.0 / df1 + 1.0 / df2)));
+        std::cout << "F-statistic: " << F_statistic << std::endl;
+        std::cout << "Critical F-value: " << f_critical << std::endl;
+    }
+    
+    std::cout << "T-statistic: " << t_statistic << std::endl;
+    std::cout << "Critical t-value: 1.96" << std::endl;
     std::cout << "Trend detected: " << (has_trend_mean ? "YES" : "NO") << std::endl;
     if (has_trend_mean) {
         std::cout << "Trend direction: " << (t_statistic > 0 ? "DECREASING" : "INCREASING") << std::endl;
     }
     std::cout << "\n2. FOSTER-STEWART METHOD:" << std::endl;
     auto [has_trend_foster, foster_statistic] = series.checkTrendFosterStewart();
+    if (data.size() >= 3) {
+        size_t n = data.size();
+        double m_i = data[0];
+        double M_i = data[0];
+        int u = 0, d = 0;
+
+        for (size_t i = 1; i < n; ++i) {
+            if (data[i] > M_i) {
+                ++u;
+                M_i = data[i];
+            } else if (data[i] < m_i) {
+                ++d;
+                m_i = data[i];
+            }
+        }
+        double S = static_cast<double>(u + d);
+        double D = static_cast<double>(u - d);
+        double E_S = 0.0;
+        double Var_S = 0.0;
+        for (size_t i = 1; i <= n; ++i) {
+            E_S += 2.0 / i;
+            Var_S += 4.0 / i - 8.0 / (i * i);
+        }
+        E_S -= 1.0;
+        Var_S = std::max(Var_S, 1e-9);
+        double ts = (S - E_S) / std::sqrt(Var_S);
+        double td = D / std::sqrt(Var_S);
+        double critical_value = 1.96;
+        std::cout << "S (trend score): " << S << std::endl;
+        std::cout << "D (difference score): " << D << std::endl;
+        std::cout << "ts statistic: " << ts << std::endl;
+        std::cout << "td statistic: " << td << std::endl;
+        std::cout << "Critical threshold: " << critical_value << std::endl;
+    }
+    std::cout << "Foster-Stewart statistic: " << foster_statistic << std::endl;
     std::cout << "Trend detected: " << (has_trend_foster ? "YES" : "NO") << std::endl;
     std::cout << "\n=== FINAL CONCLUSION ===" << std::endl;
     if (has_trend_mean && has_trend_foster) {
